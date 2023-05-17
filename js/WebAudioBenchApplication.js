@@ -1,3 +1,31 @@
+import {
+  Test,
+  BiquadFilterTest,
+  AudioBufferSourceTest,
+  OscillatorTest,
+  OscillatorAutomationTest,
+  GainTest,
+  GainCancelTest,
+  GainAutomationTest,
+  GainAutomationConnTest,
+  BiquadFilterAutomationTest,
+  DelayTest,
+  DelayAutomationTest,
+  ChannelSplitterTest,
+  ChannelMergerTest,
+  AnalyserTest,
+  WaveShaperTest,
+  CompressorTest,
+  ConvolverTest,
+  PannerTest,
+  StereoPannerTest,
+} from './Test.js';
+
+import {
+  Benchmark,
+  MixedBenchmark,
+} from './Benchmark.js'
+
 /*
  * Copyright (c) 2019-Present, Spotify AB.
  *
@@ -19,67 +47,82 @@
  * under the License.
  */
 
-class WebAudioBenchApplication {
+export class WebAudioBenchApplication {
   constructor() {
-    this.testsSelection = document.querySelector('.tests-selection select');
+    // this.testsSelection = document.querySelector('.tests-selection select');
     const tests = this.getTestList();
 
-    const urlParams = new URLSearchParams(window.location.search);
+    // const urlParams = new URLSearchParams(window.location.search);
 
     // Expression for matching test names that we want to
     // select for testing.  Use something like
     // "localhost/?pattern=Oscillator" if you want to select all
     // Oscillator tests.
-    let testPattern;
-    if (urlParams.has('pattern')) {
-	testPattern = urlParams.get('pattern');
-    }
+  //   let testPattern;
+  //   if (urlParams.has('pattern')) {
+	// testPattern = urlParams.get('pattern');
+  //   }
 
-    tests.forEach((test) => {
-      const option = document.createElement('option');
-      option.value = test.name;
-      option.innerText = test.name;
-      if (testPattern) {
-	  option.selected = option.value.indexOf(testPattern) !== -1;
-      } else {
-	  option.selected = true;
-      }
-      this.testsSelection.appendChild(option);
-    });
+    // tests.forEach((test) => {
+    //   const option = document.createElement('option');
+    //   option.value = test.name;
+    //   option.innerText = test.name;
+    //   if (testPattern) {
+	  // option.selected = option.value.indexOf(testPattern) !== -1;
+    //   } else {
+	  // option.selected = true;
+    //   }
+    //   this.testsSelection.appendChild(option);
+    // });
 
-    const runsInputElement = document.querySelector('.run-settings .runs input');
-    const durationInputElement = document.querySelector('.run-settings .duration input');
-    const ua = navigator.userAgent.toLowerCase();
-    if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
-      // Safari.
-      // 1ms resolution forces us to run longer tests, giving lower precision.
-      // See https://github.com/w3c/hr-time/issues/56
-      runsInputElement.value = 50;
-      durationInputElement.value = 200;
-    } else {
-      // Other browsers.
-      runsInputElement.value = 500;
-      durationInputElement.value = 20;
-    }
+    // const runsInputElement = document.querySelector('.run-settings .runs input');
+    // const durationInputElement = document.querySelector('.run-settings .duration input');
 
-    // Update the runs and duration from the URL, if given
-    if (urlParams.has('runs')) {
-      runsInputElement.value = urlParams.get('runs');
-    }
-    if (urlParams.has('sec')) {
-      durationInputElement.value = urlParams.get('sec');
-    }
-    // Verbosity level of console logs.  Higher means more logs. 0
-    // means the least.
-    if (urlParams.has('verbosity')) {
-      this.verbosity = urlParams.get('verbosity');
-    } else {
-      this.verbosity = 99;
-    }
+    const runsInputElement = {
+      // value: 10,
+      value: 100,
+    };
 
-    this.resultsTable = document.querySelector('.results-table');
-    this.runButton = document.querySelector('.run-button');
-    this.runButton.addEventListener('mousedown', () => {
+    const durationInputElement = {
+      // value: 1,
+      value: 20,
+    };
+
+    // const ua = navigator.userAgent.toLowerCase();
+    // if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
+    //   // Safari.
+    //   // 1ms resolution forces us to run longer tests, giving lower precision.
+    //   // See https://github.com/w3c/hr-time/issues/56
+    //   runsInputElement.value = 50;
+    //   durationInputElement.value = 200;
+    // } else {
+    //   // Other browsers.
+    //   runsInputElement.value = 500;
+    //   durationInputElement.value = 20;
+    // }
+
+    // // Update the runs and duration from the URL, if given
+    // if (urlParams.has('runs')) {
+    //   runsInputElement.value = urlParams.get('runs');
+    // }
+    // if (urlParams.has('sec')) {
+    //   durationInputElement.value = urlParams.get('sec');
+    // }
+    // // Verbosity level of console logs.  Higher means more logs. 0
+    // // means the least.
+    // if (urlParams.has('verbosity')) {
+    //   this.verbosity = urlParams.get('verbosity');
+    // } else {
+    //   this.verbosity = 99;
+    // }
+
+    this.verbosity = 99;
+
+    this.resultsLines = [];
+
+    // this.resultsTable = document.querySelector('.results-table');
+    // this.runButton = document.querySelector('.run-button');
+    // this.runButton.addEventListener('mousedown', () => {
       const testRuns = parseInt(runsInputElement.value);
       if (Number.isNaN(testRuns) || testRuns < 1) {
         alert("The number of test runs is invalid.");
@@ -92,32 +135,100 @@ class WebAudioBenchApplication {
         return;
       }
 
-      const testNames = [];
-      for(let i = 0; i < this.testsSelection.options.length; i++) {
-        const option = this.testsSelection.options[i];
-        if (option.selected) {
-          testNames.push(option.value);
-        }
-      }
+      // const testNames = tests.map(t => t.name);
+
+      const testNames = [
+        'Biquad-default',
+        'Biquad-440',
+        'AudioBufferSource-rate1',
+        'AudioBufferSource-rate0.9',
+        'AudioBufferSource-rate1-noloop',
+        'AudioBufferSource-rate0.9-noloop',
+        'Oscillator',
+        'Oscillator.frequency-linear-a-rate',
+        'Oscillator.frequency-linear-k-rate',
+        'Gain-default',
+        'Gain-1.0',
+        'Gain-0.9',
+        'Gain-0.9-k-rate',
+        'GainCancel-1.0',
+        'GainCancel-0.9',
+        'GainCancel-0.9-k-rate',
+        'GainAutomation-exp-a-rate',
+        'GainAutomation-linear-a-rate',
+        'GainAutomation-target-a-rate',
+        'GainAutomation-curve-a-rate',
+        'GainAutomation-exp-k-rate',
+        'GainAutomation-linear-k-rate',
+        'GainAutomation-target-k-rate',
+        'GainAutomation-curve-k-rate',
+        'GainAutomationConn-a-rate',
+        'GainAutomationConn-k-rate',
+        'BiquadAutomation-exp-a-rate',
+        'BiquadAutomation-linear-a-rate',
+        'BiquadAutomation-target-a-rate',
+        'BiquadAutomation-curve-a-rate',
+        'BiquadAutomation-exp-k-rate',
+        'BiquadAutomation-linear-k-rate',
+        'BiquadAutomation-target-k-rate',
+        'BiquadAutomation-curve-k-rate',
+        'Delay-default',
+        'Delay-0.1',
+        'DelayAutomation-a-rate',
+        'DelayAutomation-k-rate',
+        'ChannelSplitter',
+        'ChannelMerger',
+        'Analyser',
+        'WaveShaper-1x',
+        'WaveShaper-2x',
+        'WaveShaper-4x',
+        'Compressor-knee-0',
+        'Compressor-knee-40',
+        'Convolver-128f-3ms',
+        'Convolver-1024f-23ms',
+        'Convolver-2048f-46ms',
+        'Convolver-32768f-743ms',
+        'Panner-equalpower',
+        'Panner-HRTF',
+        'StereoPanner-default',
+        'StereoPanner-0',
+        'StereoPanner-0.2',
+        'StereoPanner-1',
+      ]
+
+      // for(let i = 0; i < this.testsSelection.options.length; i++) {
+      //   const option = this.testsSelection.options[i];
+      //   if (option.selected) {
+      //     testNames.push(option.value);
+      //   }
+      // }
 
       if(testNames.length === 0) {
         alert("Please select one or more tests.");
         return;
       }
 
-      this.runButton.disabled = true;
+      // this.runButton.disabled = true;
 
-      this.resultsTable.querySelectorAll('tr:not(.header)').forEach(elem => elem.remove());
+      // this.resultsTable.querySelectorAll('tr:not(.header)').forEach(elem => elem.remove());
       this.testResults = {};
 
 
-      const origText = this.runButton.innerText;
-      this.runButton.innerText = '...';
+      // const origText = this.runButton.innerText;
+      // this.runButton.innerText = '...';
+      console.log(testNames, testRuns, defaultRenderDuration);
       this.runTests(testNames, testRuns, defaultRenderDuration).finally(() => {
-        this.runButton.innerText = origText;
-        this.runButton.disabled = false;
+        // this.runButton.innerText = origText;
+        // this.runButton.disabled = false;
+        console.log('------------------------------- tests ended');
+
+        this.resultsLines.forEach(l => console.log(l));
+
+        console.table(this.resultsLines);
       });
-    });
+    // });
+
+
   }
 
   getTestList() {
@@ -214,6 +325,7 @@ class WebAudioBenchApplication {
     const durations = [];
     let chain = undefined;
     console.log('Running ' + test.name);
+
     for(let i = 0; i < numRuns; i++) {
       if (chain === undefined) {
         chain = test.run(renderSeconds);
@@ -284,14 +396,20 @@ class WebAudioBenchApplication {
   }
 
   outputRow(cells) {
-    const tr = document.createElement('tr');
+    console.log(cells);
+    // const tr = document.createElement('tr');
+    const labels = ['TEST', 'μs', 'MIN', 'Q1', 'MEDIAN', 'Q3', 'MAX', 'MEAN', 'STDDEV'];
+    let result = {};
 
-    cells.forEach((v => {
-      const td = document.createElement('td');
-      td.innerText = v;
-      tr.appendChild(td);
-    }));
+    cells.forEach((value, index) => {
+      // const td = document.createElement('td');
+      // td.innerText = v;
+      // tr.appendChild(td);
+      const label = labels[index];
+      result[label] = label === 'TEST' ? value : parseFloat(value);
+    });
 
-    this.resultsTable.appendChild(tr);
+    // this.resultsTable.appendChild(tr);
+    this.resultsLines.push(result);
   }
 }

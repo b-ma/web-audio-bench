@@ -1,3 +1,5 @@
+import { OfflineAudioContext } from 'node-web-audio-api';
+import { getTime } from '@ircam/sc-gettime'; // uses hr-time
 /*
  * Copyright (c) 2019-Present, Spotify AB.
  *
@@ -20,11 +22,11 @@
  */
 
 /**
- * Base class for tests.
+ * Base export class for tests.
  *
  * Tests are run in an OfflineAudioContext and the duration is measured.
  */
-class Test {
+export class Test {
   /**
    * @param {string} name The name of the test.
    * @param {number} numNodes Number of nodes used in the test. The test duration will be divided by this number to give the duration per node. Choose a number which makes your test take > 500 ms to run.
@@ -57,7 +59,7 @@ class Test {
   run(duration) {
     return new Promise((resolve, reject) => {
       const sampleRate = 44100;
-      const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, sampleRate * duration, sampleRate);
+      const ctx = new OfflineAudioContext(1, sampleRate * duration, sampleRate);
 
       try {
         // we use an AudioBufferSourceNode as baseline.
@@ -66,9 +68,10 @@ class Test {
         const source = ctx.createBufferSource();
         const buffer = ctx.createBuffer(1, sampleRate, sampleRate);
         const chan = buffer.getChannelData(0);
-        for(let i = 0; i < chan.length; i++) {
+        for (let i = 0; i < chan.length; i++) {
           chan[i] = Math.sin(Math.PI * 2 * i * 440 / 44100);
         }
+
         source.buffer = buffer;
         source.loop = true;
         source.loopStart = 0;
@@ -84,23 +87,28 @@ class Test {
         return;
       }
 
-      let startTime;
+      // let startTime;
       // cooling period
-      setTimeout(() => {
-        startTime = window.performance.now();
-        ctx.startRendering();
+      setTimeout(async () => {
+        const startTime = getTime();
+        await ctx.startRendering();
+        const endTime = getTime();
+
+        const duration = (endTime - startTime);
+
+        resolve(duration);
       }, 10);
 
-      ctx.oncomplete = (event) => {
-        const endTime = event.timeStamp;
-        const duration = (endTime - startTime) / 1000;
-        resolve(duration);
-      };
+      // ctx.oncomplete = (event) => {
+      //   const endTime = event.timeStamp;
+      //   const duration = (endTime - startTime) / 1000;
+      //   resolve(duration);
+      // };
     });
   }
 }
 
-class BiquadFilterTest extends Test {
+export class BiquadFilterTest extends Test {
   constructor(value) {
     super('Biquad-' + value, 7);
     this.value = value;
@@ -121,7 +129,7 @@ class BiquadFilterTest extends Test {
   }
 }
 
-class BiquadFilterAutomationTest extends Test {
+export class BiquadFilterAutomationTest extends Test {
   constructor(rampType, automationRate) {
     super('BiquadAutomation-' + rampType + '-' + automationRate, 3);
     this.rampType = rampType;
@@ -163,7 +171,7 @@ class BiquadFilterAutomationTest extends Test {
   }
 }
 
-class ConvolverTest extends Test {
+export class ConvolverTest extends Test {
   constructor(length, nameSuffix, numNodes, durationFactor) {
     super('Convolver-' + nameSuffix, numNodes, durationFactor);
     this.length = length;
@@ -188,7 +196,7 @@ class ConvolverTest extends Test {
   }
 }
 
-class WaveShaperTest extends Test {
+export class WaveShaperTest extends Test {
   constructor(oversample, nameSuffix, numNodes) {
     super('WaveShaper-' + nameSuffix, numNodes);
     this.oversample = oversample;
@@ -210,7 +218,7 @@ class WaveShaperTest extends Test {
   }
 }
 
-class GainTest extends Test {
+export class GainTest extends Test {
   constructor(gain, automationRate, nameSuffix) {
     super('Gain-' + nameSuffix, 30);
     this.gain = gain;
@@ -233,7 +241,7 @@ class GainTest extends Test {
   }
 }
 
-class GainCancelTest extends Test {
+export class GainCancelTest extends Test {
   constructor(gain, automationRate, nameSuffix) {
     super('GainCancel-' + nameSuffix, 30);
     this.gain = gain;
@@ -257,7 +265,7 @@ class GainCancelTest extends Test {
   }
 }
 
-class GainAutomationTest extends Test {
+export class GainAutomationTest extends Test {
   constructor(rampType, automationRate) {
     super('GainAutomation-' + rampType + '-' + automationRate, 12);
     this.rampType = rampType;
@@ -297,7 +305,7 @@ class GainAutomationTest extends Test {
   }
 }
 
-class GainAutomationConnTest extends Test {
+export class GainAutomationConnTest extends Test {
   constructor(automationRate) {
     super('GainAutomationConn-' + automationRate, 12);
     this.automationRate = automationRate;
@@ -316,7 +324,7 @@ class GainAutomationConnTest extends Test {
   }
 }
 
-class CompressorTest extends Test {
+export class CompressorTest extends Test {
   constructor(knee) {
     super('Compressor-knee-' + knee, 1);
     this.knee = knee;
@@ -331,7 +339,7 @@ class CompressorTest extends Test {
   }
 }
 
-class OscillatorTest extends Test {
+export class OscillatorTest extends Test {
   constructor() {
     super('Oscillator', 3);
   }
@@ -346,7 +354,7 @@ class OscillatorTest extends Test {
   }
 }
 
-class OscillatorAutomationTest extends Test {
+export class OscillatorAutomationTest extends Test {
   constructor(rampType, automationRate) {
     super('Oscillator.frequency-' + rampType + '-' + automationRate, 3);
     this.rampType = rampType;
@@ -370,7 +378,7 @@ class OscillatorAutomationTest extends Test {
   }
 }
 
-class AudioBufferSourceTest extends Test {
+export class AudioBufferSourceTest extends Test {
   constructor(rate, looping, numNodes) {
     // Preserve old name if we're looping (since that's what was happening before.
     // If we're not looping, add a suffix.
@@ -381,7 +389,6 @@ class AudioBufferSourceTest extends Test {
 
   buildGraph(ctx, last) {
     const bufferLength = this.looping ? ctx.sampleRate : ctx.length;
-
     // Buffer for the AudioBufferSourceNode.  This can be shared
     // between all the nodes.
     const buffer = ctx.createBuffer(1, bufferLength, ctx.sampleRate);
@@ -395,14 +402,16 @@ class AudioBufferSourceTest extends Test {
     for (let i = 0; i < this.numNodes; i++) {
       const node = ctx.createBufferSource();
       node.buffer = buffer;
+
       if (this.looping) {
-        node.loopStart = 0;
-        node.loopEnd = 1;
+        // node.loopStart = 0;
+        // node.loopEnd = 1;
         node.loop = true;
       }
       if (this.rate !== 1) {
         node.playbackRate.value = this.rate;
       }
+
       node.start(0);
       node.connect(ctx.destination);
     }
@@ -410,7 +419,7 @@ class AudioBufferSourceTest extends Test {
   }
 }
 
-class DelayTest extends Test {
+export class DelayTest extends Test {
   constructor(delay) {
     super('Delay-' + delay, 2);
     this.delay = delay;
@@ -431,7 +440,7 @@ class DelayTest extends Test {
   }
 }
 
-class DelayAutomationTest extends Test {
+export class DelayAutomationTest extends Test {
   constructor(automationRate) {
     super('DelayAutomation-' + automationRate, 2);
     this.automationRate = automationRate;
@@ -450,7 +459,7 @@ class DelayAutomationTest extends Test {
   }
 }
 
-class ChannelSplitterTest extends Test {
+export class ChannelSplitterTest extends Test {
   constructor() {
     super('ChannelSplitter', 30);
   }
@@ -465,7 +474,7 @@ class ChannelSplitterTest extends Test {
   }
 }
 
-class ChannelMergerTest extends Test {
+export class ChannelMergerTest extends Test {
   constructor() {
     super('ChannelMerger', 30);
   }
@@ -480,7 +489,7 @@ class ChannelMergerTest extends Test {
   }
 }
 
-class AnalyserTest extends Test {
+export class AnalyserTest extends Test {
   constructor() {
     super('Analyser', 30);
   }
@@ -495,7 +504,7 @@ class AnalyserTest extends Test {
   }
 }
 
-class PannerTest extends Test {
+export class PannerTest extends Test {
   constructor(panningModel, numNodes) {
     super('Panner-' + panningModel, numNodes);
     this.panningModel = panningModel;
@@ -514,7 +523,7 @@ class PannerTest extends Test {
   }
 }
 
-class StereoPannerTest extends Test {
+export class StereoPannerTest extends Test {
   constructor(pan) {
     super('StereoPanner-' + pan, 20);
     this.pan = pan;

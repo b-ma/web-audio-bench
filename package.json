@@ -1,0 +1,19 @@
+{
+  "name": "webaudio-bench-spotify",
+  "version": "1.0.0",
+  "description": "[![lifecycle](https://img.shields.io/badge/lifecycle-alpha-blue.svg)](https://img.shields.io/badge/lifecycle-alpha-blue.svg) [![License](https://img.shields.io/github/license/spotify/apollo.svg)](LICENSE.txt)",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ircam/sc-gettime": "^1.0.1",
+    "node-web-audio-api": "^0.7.0"
+  }
+}

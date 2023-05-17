@@ -19,7 +19,7 @@
  * under the License.
  */
 
-class Benchmark {
+export class Benchmark {
   /**
    * @param name The benchmark name.
    * @param testResults a map from test name to score from the individual tests.
@@ -51,7 +51,7 @@ class Benchmark {
   }
 }
 
-class MixedBenchmark extends Benchmark{
+export class MixedBenchmark extends Benchmark{
   constructor(testResults) {
     super('MixedBenchmark', testResults);
   }

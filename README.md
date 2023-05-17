@@ -1,3 +1,8 @@
+Adaptated to bench the `node-web-audio-api` package
+
+--- 
+# Original README
+
 # Web Audio Bench
 
 [![lifecycle](https://img.shields.io/badge/lifecycle-alpha-blue.svg)](https://img.shields.io/badge/lifecycle-alpha-blue.svg)
