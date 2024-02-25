@@ -1,6 +1,56 @@
-Adaptated to bench the `node-web-audio-api` package
+# Web Audio Bench
+
+Web audio bench from [https://github.com/spotify/web-audio-bench](https://github.com/spotify/web-audio-bench), adapted to bench the `node-web-audio-api` package.
+
+## Changes made
+
+- `js/Test.js`
+    + import / export
+    + use `hrtime()` instead of `performance.now()`
+- `js/Test.js`
+    + import / export
+    + adapt DOM output and configuration to console and command line
+
+## Run the benches
+
+```sh
+cd path/to/web-audio-bench
+npm install
+node index.js
+```
+
+## Run a local `node-web-audio-api` build
+
+You need to link the lib into the benches, cf. [https://docs.npmjs.com/cli/v8/commands/npm-link](https://docs.npmjs.com/cli/v8/commands/npm-link)
+
+```sh
+cd path/to/node-web-audio-api
+npm link
+# then
+cd path/to/web-audio-bench
+npm install
+npm link node-web-audio-api # must be done after `npm install`
+```
+
+## Options
+
+```
+Options:
+  --list                 List the name of the tests and exit
+  --filter <names...>    Filter tests (space separated test names), run all test if empty (default: [])
+  --test-runs <int>      Number of runs for each test (default: 500)
+  --test-duration <int>  Default number of seconds to render audio for each test (default: 20)
+  --verbose              Verbosity level of console logs.
+  -h, --help             display help for command
+```
+
+example
+```
+node index.js --filter Analyser DelayAutomation-a-rate --verbose --test-runs 10
+```
 
 --- 
+
 # Original README
 
 # Web Audio Bench

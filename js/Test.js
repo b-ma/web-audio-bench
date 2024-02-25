@@ -1,4 +1,4 @@
-import { OfflineAudioContext } from 'node-web-audio-api';
+import { OfflineAudioContext, AudioContext } from 'node-web-audio-api';
 import { getTime } from '@ircam/sc-gettime'; // uses hr-time
 /*
  * Copyright (c) 2019-Present, Spotify AB.
@@ -71,7 +71,6 @@ export class Test {
         for (let i = 0; i < chan.length; i++) {
           chan[i] = Math.sin(Math.PI * 2 * i * 440 / 44100);
         }
-
         source.buffer = buffer;
         source.loop = true;
         source.loopStart = 0;
@@ -87,23 +86,20 @@ export class Test {
         return;
       }
 
-      // let startTime;
+      let startTime;
       // cooling period
-      setTimeout(async () => {
-        const startTime = getTime();
-        await ctx.startRendering();
-        const endTime = getTime();
-
-        const duration = (endTime - startTime);
-
-        resolve(duration);
+      setTimeout(() => {
+        // startTime = window.performance.now(); // is miliseconds
+        startTime = getTime() * 1000;
+        ctx.startRendering();
       }, 10);
 
-      // ctx.oncomplete = (event) => {
-      //   const endTime = event.timeStamp;
-      //   const duration = (endTime - startTime) / 1000;
-      //   resolve(duration);
-      // };
+      ctx.oncomplete = (event) => {
+        // const endTime = event.timeStamp;
+        const endTime = getTime() * 1000;
+        const duration = (endTime - startTime) / 1000;
+        resolve(duration);
+      };
     });
   }
 }
@@ -395,7 +391,7 @@ export class AudioBufferSourceTest extends Test {
 
     // make sure it is not all zeros or Firefox will optimise away fft
     const chan = buffer.getChannelData(0);
-    for(let i = 0; i < chan.length; i++) {
+    for (let i = 0; i < chan.length; i++) {
       chan[i] = Math.sin(Math.PI * 2 * i * 440 / 44100);
     }
 
@@ -409,6 +405,7 @@ export class AudioBufferSourceTest extends Test {
         node.loop = true;
       }
       if (this.rate !== 1) {
+        // console.log(this.rate);
         node.playbackRate.value = this.rate;
       }
 
